@@ -468,7 +468,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			clearColor[1] = { 0.0f };
 			clearColor[2] = { 0.0f };
 			clearColor[3] = { 0.0f };
-			OutputDebugStringA("Hit SPACE\n");
 		}
 
 		commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
