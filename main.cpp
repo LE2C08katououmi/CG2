@@ -226,7 +226,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//DirectInputの初期化
 	IDirectInput8* directInput = nullptr;
 	result = DirectInput8Create(
-		w.hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, 
+		w.hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8,
 		(void**)&directInput, nullptr);
 	assert(SUCCEEDED(result));
 
@@ -251,6 +251,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//頂点データ
 	XMFLOAT3 vertices[] = {
 		{ -0.5f, -0.5f, 0.0f }, // 左下
+		{ -0.5f, +0.5f, 0.0f }, // 左上
+		{ +0.5f, -0.5f, 0.0f }, // 右下
+
+		{ +0.5f, +0.5f, 0.0f }, // 右上
 		{ -0.5f, +0.5f, 0.0f }, // 左上
 		{ +0.5f, -0.5f, 0.0f }, // 右下
 	};
@@ -365,36 +369,34 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	};
 
 	// グラフィックスパイプライン設定
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineDesc{};
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineDesc[2]{};
 
 	// シェーダーの設定
-	pipelineDesc.VS.pShaderBytecode = vsBlob->GetBufferPointer();
-	pipelineDesc.VS.BytecodeLength = vsBlob->GetBufferSize();
-	pipelineDesc.PS.pShaderBytecode = psBlob->GetBufferPointer();
-	pipelineDesc.PS.BytecodeLength = psBlob->GetBufferSize();
-
+	pipelineDesc[0].VS.pShaderBytecode = vsBlob->GetBufferPointer();
+	pipelineDesc[0].VS.BytecodeLength = vsBlob->GetBufferSize();
+	pipelineDesc[0].PS.pShaderBytecode = psBlob->GetBufferPointer();
+	pipelineDesc[0].PS.BytecodeLength = psBlob->GetBufferSize();
 	// サンプルマスクの設定
-	pipelineDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK; // 標準設定
+	pipelineDesc[0].SampleMask = D3D12_DEFAULT_SAMPLE_MASK; // 標準設定
 
 	// ラスタライザの設定
-	pipelineDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;  // カリングしない
-	pipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID; // ポリゴン内塗りつぶし
-	pipelineDesc.RasterizerState.DepthClipEnable = true; // 深度クリッピングを有効に
-
+	pipelineDesc[0].RasterizerState.CullMode = D3D12_CULL_MODE_NONE;  // カリングしない
+	pipelineDesc[0].RasterizerState.FillMode = D3D12_FILL_MODE_SOLID; // ポリゴン内塗りつぶし
+	pipelineDesc[0].RasterizerState.DepthClipEnable = true; // 深度クリッピングを有効に
 	// ブレンドステート
-	pipelineDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;  // RBGA全てのチャンネルを描画
+	pipelineDesc[0].BlendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;  // RBGA全てのチャンネルを描画
 
 	// 頂点レイアウトの設定
-	pipelineDesc.InputLayout.pInputElementDescs = inputLayout;
-	pipelineDesc.InputLayout.NumElements = _countof(inputLayout);
+	pipelineDesc[0].InputLayout.pInputElementDescs = inputLayout;
+	pipelineDesc[0].InputLayout.NumElements = _countof(inputLayout);
 
 	// 図形の形状設定
-	pipelineDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	pipelineDesc[0].PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
 	// その他の設定
-	pipelineDesc.NumRenderTargets = 1; // 描画対象は1つ
-	pipelineDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB; // 0～255指定のRGBA
-	pipelineDesc.SampleDesc.Count = 1; // 1ピクセルにつき1回サンプリング
+	pipelineDesc[0].NumRenderTargets = 1; // 描画対象は1つ
+	pipelineDesc[0].RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB; // 0～255指定のRGBA
+	pipelineDesc[0].SampleDesc.Count = 1; // 1ピクセルにつき1回サンプリング
 
 	// ルートシグネチャ
 	ID3D12RootSignature* rootSignature;
@@ -411,18 +413,28 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	assert(SUCCEEDED(result));
 	rootSigBlob->Release();
 	// パイプラインにルートシグネチャをセット
-	pipelineDesc.pRootSignature = rootSignature;
+	pipelineDesc[0].pRootSignature = rootSignature;
 
 	// パイプランステートの生成
-	ID3D12PipelineState* pipelineState = nullptr;
-	result = device->CreateGraphicsPipelineState(&pipelineDesc, IID_PPV_ARGS(&pipelineState));
+	ID3D12PipelineState* pipelineState[2] = {};
+	result = device->CreateGraphicsPipelineState(&pipelineDesc[0], IID_PPV_ARGS(&pipelineState[0]));
+	assert(SUCCEEDED(result));
+
+	pipelineDesc[1] = pipelineDesc[0];
+	pipelineDesc[1].RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME; // ワイヤーフレーム
+	result = device->CreateGraphicsPipelineState(&pipelineDesc[1], IID_PPV_ARGS(&pipelineState[1]));
 	assert(SUCCEEDED(result));
 
 #pragma endregion
 
-	
+
 
 #pragma endregion
+	BYTE oldkey[256] = {};
+	BYTE key[256] = {};
+
+	bool Flag = false;
+	bool Flag2 =false;
 
 	//ゲームループ
 	while (true) {
@@ -456,7 +468,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		keyboard->Acquire();
 
 		//全キーの入力状態を取得する
-		BYTE key[256] = {};
+		for (int i = 0; i < _countof(oldkey); i++)
+		{
+			oldkey[i] = key[i];
+		}
+
 		keyboard->GetDeviceState(sizeof(key), key);
 
 		// 3.画面クリア R G B A
@@ -464,9 +480,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		if (key[DIK_SPACE]) // スペースキーが押されていたら
 		{
-			clearColor[0] = { 1.0f };
-			clearColor[1] = { 0.0f };
-			clearColor[2] = { 0.0f };
+			clearColor[0] = { 0.91764706f };
+			clearColor[1] = { 0.56078431f };
+			clearColor[2] = { 0.59607843f };
 			clearColor[3] = { 0.0f };
 		}
 
@@ -474,15 +490,34 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		// 4.描画コマンドここから
 		// ビューポート設定コマンド
-		D3D12_VIEWPORT viewport{};
-		viewport.Width = window_width;
-		viewport.Height = window_height;
-		viewport.TopLeftX = 0;
-		viewport.TopLeftY = 0;
-		viewport.MinDepth = 0.0f;
-		viewport.MaxDepth = 1.0f;
-		// ビューポート設定コマンドを、コマンドリストに積む
-		commandList->RSSetViewports(1, &viewport);
+		D3D12_VIEWPORT viewport[4];
+		viewport[0].Width = 700;
+		viewport[0].Height = 500;
+		viewport[0].TopLeftX = 0;
+		viewport[0].TopLeftY = 0;
+		viewport[0].MinDepth = 0.0f;
+		viewport[0].MaxDepth = 1.0f;
+
+		viewport[1].Width = 500;
+		viewport[1].Height = 500;
+		viewport[1].TopLeftX = 700;
+		viewport[1].TopLeftY = 0;
+		viewport[1].MinDepth = 0.0f;
+		viewport[1].MaxDepth = 1.0f;
+
+		viewport[2].Width = 700;
+		viewport[2].Height = 220;
+		viewport[2].TopLeftX = 0;
+		viewport[2].TopLeftY = 500;
+		viewport[2].MinDepth = 0.0f;
+		viewport[2].MaxDepth = 1.0f;
+
+		viewport[3].Width = 500;
+		viewport[3].Height = 220;
+		viewport[3].TopLeftX = 700;
+		viewport[3].TopLeftY = 500;
+		viewport[3].MinDepth = 0.0f;
+		viewport[3].MaxDepth = 1.0f;
 
 		// シザー矩形
 		D3D12_RECT scissorRect{};
@@ -494,7 +529,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		commandList->RSSetScissorRects(1, &scissorRect);
 
 		// パイプラインステートとルートシグネチャの設定コマンド
-		commandList->SetPipelineState(pipelineState);
 		commandList->SetGraphicsRootSignature(rootSignature);
 
 		// プリミティブ形状の設定コマンド
@@ -505,6 +539,59 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		// 描画コマンド
 		commandList->DrawInstanced(_countof(vertices), 1, 0, 0);// 全ての頂点を使って描画
+
+		// ビューポート設定コマンドを、コマンドリストに積む
+		if (key[DIK_1] && !oldkey[DIK_1]) 
+		{
+			if (Flag == true) 
+			{
+				Flag == false;
+			}
+			else
+			{
+				Flag == true;
+			}
+		}
+
+		if (key[DIK_2] && !oldkey[DIK_2])
+		{
+			if (Flag2 == true)
+			{
+				Flag2 == false;
+			}
+			else
+			{
+				Flag2 == true;
+			}
+		}
+
+		if (Flag2 == true)
+		{
+			commandList->SetPipelineState(pipelineState[1]);
+		}
+		else
+		{
+			if (pipelineState[0] != 0)
+			{
+				commandList->SetPipelineState(pipelineState[0]);
+			}
+		}
+
+		for (int i = 0; i < sizeof(viewport) / sizeof(viewport[0]); i++)
+		{
+			commandList->RSSetViewports(1, &viewport[i]);
+
+			if (Flag == true)
+			{
+				// 描画コマンド
+				commandList->DrawInstanced(_countof(vertices), 1, 0, 0);// 全ての頂点を使って描画
+			}
+			else
+			{
+				// 描画コマンド
+				commandList->DrawInstanced(3, 1, 0, 0);// 全ての頂点を使って描画
+			}
+		}
 
 		// 4.描画コマンドここまで
 
