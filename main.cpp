@@ -433,8 +433,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	BYTE oldkey[256] = {};
 	BYTE key[256] = {};
 
-	bool Flag = false;
-	bool Flag2 =false;
+	bool Flag = true;
+	bool Flag2 = false;
 
 	//ゲームループ
 	while (true) {
@@ -541,15 +541,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		commandList->DrawInstanced(_countof(vertices), 1, 0, 0);// 全ての頂点を使って描画
 
 		// ビューポート設定コマンドを、コマンドリストに積む
-		if (key[DIK_1] && !oldkey[DIK_1]) 
+		if (key[DIK_1] && !oldkey[DIK_1])
 		{
-			if (Flag == true) 
+			if (Flag == true)
 			{
-				Flag == false;
+				Flag = false;
 			}
 			else
 			{
-				Flag == true;
+				Flag = true;
 			}
 		}
 
@@ -557,11 +557,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{
 			if (Flag2 == true)
 			{
-				Flag2 == false;
+				Flag2 = false;
 			}
 			else
 			{
-				Flag2 == true;
+				Flag2 = true;
 			}
 		}
 
