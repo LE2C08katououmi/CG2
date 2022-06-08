@@ -236,9 +236,14 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		IID_PPV_ARGS(&vertBuff));
 	assert(SUCCEEDED(result));
 
-	// 定数バッファ用データ構造体
+	// 定数バッファ用データ構造体(マテリアル)
 	struct ConstBufferData {
 		XMFLOAT4 color; // 色(RGBA)
+	};
+
+	// 定数バッファ用データ構造体(3D変換行列)
+	struct ConstBufferDataTransform {
+		XMMATRIX mat; // 3D変換行列
 	};
 
 	// ヒープ設定
@@ -271,6 +276,15 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		nullptr,
 		IID_PPV_ARGS(&constBuffMaterial));
 	assert(SUCCEEDED(result));
+
+	ID3D12Resource* constBuffTransform = nullptr;
+	ConstBufferDataTransform* constMapTransform = nullptr;
+
+	{
+		// ヒープ設定
+		D3D12_HEAP_PROPERTIES cbHeapProp{};
+		cbHeapProp.Type = D3D12_HEAP_TYPE_UPLOAD;
+	}
 
 	// 定数バッファのマッピング
 	ConstBufferDataMaterial* constMapMaterial = nullptr;
