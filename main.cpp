@@ -209,11 +209,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	};
 	// 頂点データ
 	Vertex vertices[] = {
-		// x      y     z       u     v
-		{{  0.0f, 100.0f, 0.0f}, {0.0f, 1.0f}}, // 左下
-		{{  0.0f,   0.0f, 0.0f}, {0.0f, 0.0f}}, // 左上
-		{{100.0f, 100.0f, 0.0f}, {1.0f, 1.0f}}, // 右下
-		{{100.0f,   0.0f, 0.0f}, {1.0f, 0.0f}}, // 右上
+		// x      y       z        u     v
+		{{-50.0f, -50.0f, 50.0f}, {0.0f, 1.0f}}, // 左下
+		{{-50.0f,  50.0f, 50.0f}, {0.0f, 0.0f}}, // 左上
+		{{ 50.0f, -50.0f, 50.0f}, {1.0f, 1.0f}}, // 右下
+		{{ 50.0f,  50.0f, 50.0f}, {1.0f, 0.0f}}, // 右上
 	};
 
 	// 頂点データ全体のサイズ = 頂点データ一つ分のサイズ * 頂点データの要素数
@@ -332,7 +332,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	assert(SUCCEEDED(result));
 
 	result = constBuffMaterial->Map(0, nullptr, (void**)&constMap);// マッピング
-	constMap->color = XMFLOAT4(1, 0, 0, 0.5f);
+	constMap->color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	ID3D12Resource* constBuffTransform = nullptr;
 	ConstBufferDataTransform* constMapTransform = nullptr;
@@ -364,10 +364,16 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	result = constBuffTransform->Map(0, nullptr, (void**)&constMapTransform);
 	constMapTransform->mat = XMMatrixIdentity();
 
-	constMapTransform->mat = XMMatrixOrthographicOffCenterLH(
+	//平行投資行列の計算
+	constMapTransform->mat = XMMatrixOrthographicOffCenterLH
+	(0.0f, 1280.0f, 720.0f, 0.0f, 0.0f, 1.0f);
 
-	)
-
+	//透視投影行列の計算
+	constMapTransform->mat = XMMatrixPerspectiveFovLH(
+		XMConvertToRadians(45.0f),
+		(float)window_widht / window_height,
+		0.1f, 1000.0f
+	);
 
 	assert(SUCCEEDED(result));
 
