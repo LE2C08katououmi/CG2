@@ -216,6 +216,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	UINT64 fenceVal = 0;
 	result = device->CreateFence(fenceVal, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
 
+	float angle = 0.0f;
+
+	// 座標
+	XMFLOAT3 position = { 0.0f,0.0f,0.0f };
+
 #pragma endregion
 
 #pragma region 描画初期化処理
@@ -405,9 +410,19 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	XMFLOAT3 eye(0, 0, -100); // 視点座標
 	XMFLOAT3 target(0, 0, 0); // 注視点座標
 	XMFLOAT3 up(0, 1, 0);     // 上方向ベクトル
+
+	// ワールド変換行列
+	XMMATRIX matWorld;
+
 	matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
 
-	constMapTransform->mat = matView * matProjection;
+	XMMATRIX matTrans; // 平行移動行列
+	matTrans = XMMatrixTranslation(-50.0f, 0, 0); // (-50,0,0)平行移動
+	matWorld *= matTrans; // ワールド行列に平行移動を反映
+
+	//constMapTransform->mat = matView * matProjection;
+
+	constMapTransform->mat = matWorld * matView * matProjection;
 
 	assert(SUCCEEDED(result));
 
@@ -735,8 +750,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		FLOAT clearColor[] = { 0.1f,0.25f,0.5f,0.0f };
 		cmmandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
-		float angle = 0.0f;
-
 		if (key[DIK_D] || key[DIK_A])
 		{
 			if (key[DIK_D]) { angle += XMConvertToRadians(1.0f); }
@@ -750,6 +763,35 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 		//定数バッファに転送
 		constMapTransform->mat = matView * matProjection;
+
+		// いずれかのキーを押していたら
+		if (key[DIK_UP] || key[DIK_DOWN] || key[DIK_RIGHT] || key[DIK_LEFT])
+		{
+			// 座標を移動する処理(Z座標)
+			if (key[DIK_UP]) { position.z += 1.0f; }
+			else if (key[DIK_DOWN]) { position.z -= 1.0f; }
+			if (key[DIK_RIGHT]) { position.x += 1.0f; }
+			else if (key[DIK_LEFT]) { position.x -= 1.0f; }
+		}
+
+		matWorld = XMMatrixIdentity();
+
+		XMMATRIX matScale; // スケーリング行列
+		matScale = XMMatrixScaling(1.0f, 0.5f, 1.0f);
+		matWorld *= matScale; // ワールド行列にスケーリングを反映
+
+		XMMATRIX matRot; // 回転行列
+		matRot = XMMatrixIdentity();
+		matRot *= XMMatrixRotationZ(XMConvertToRadians(0.0f)); // Z軸まわりに0度回転してから
+		matRot *= XMMatrixRotationX(XMConvertToRadians(15.0f));// X軸まわりに15度回転してから
+		matRot *= XMMatrixRotationY(XMConvertToRadians(30.0f));// Y軸まわりに30度回転してから
+		matWorld *= matRot; // ワールド行列に回転に反映
+
+		XMMATRIX matTrans; // 平行移動行列
+		matTrans = XMMatrixTranslation(position.x, position.y, position.z);
+		matWorld *= matTrans; // ワールド行列に平行移動を反映
+
+		constMapTransform->mat = matWorld * matView * matProjection;
 
 #pragma region グラフィックスコマンド
 
