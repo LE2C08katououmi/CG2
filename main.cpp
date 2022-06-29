@@ -687,7 +687,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	assert(SUCCEEDED(result));
 
 
-#pragma endregion
+	//DirectX‰Šú‰»ˆ—@‚±‚±‚Ü‚Å
 
 	while (true)
 	{
