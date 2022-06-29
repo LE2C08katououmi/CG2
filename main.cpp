@@ -1,3 +1,6 @@
+#define DIRECTINPUT_VERSION  0x000
+#include<dinput.h>
+
 #include<Windows.h>
 #include<d3d12.h>
 #include<dxgi1_6.h>
@@ -5,10 +8,12 @@
 #include<vector>
 #include<string>
 #include<DirectXMath.h>
-#include <d3dcompiler.h>
+#include<d3dcompiler.h>
 #include<DirectXTex.h>
 
 #pragma comment(lib, "d3dcompiler.lib")
+#pragma comment(lib,"dinput8.lib")
+#pragma comment(lib,"dxguid.lib")
 #pragma comment(lib,"d3d12.lib")
 #pragma comment(lib,"dxgi.lib")
 
@@ -92,6 +97,26 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	ID3D12GraphicsCommandList* cmmandList = nullptr;
 	ID3D12CommandQueue* cmmandQueue = nullptr;
 	ID3D12DescriptorHeap* rtvHeap = nullptr;
+
+	// DirectInputの初期化
+	IDirectInput8* directInput = nullptr;
+	result = DirectInput8Create(
+		w.hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&directInput, nullptr);
+	assert(SUCCEEDED(result));
+
+	// キーボードデバイスの生成
+	IDirectInputDevice8* keyboard = nullptr;
+	result = directInput->CreateDevice(GUID_SysKeyboard, &keyboard, NULL);
+	assert(SUCCEEDED(result));
+
+	// 入力データ形式のセット
+	result = keyboard->SetDataFormat(&c_dfDIKeyboard); // 標準形式
+	assert(SUCCEEDED(result));
+
+	// 排他制御レベルのセット
+	result = keyboard->SetCooperativeLevel(
+		hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY);
+	assert(SUCCEEDED(result));
 
 	//DXGIファクトリー
 	result = CreateDXGIFactory(IID_PPV_ARGS(&dxgiFactory));
@@ -193,7 +218,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 #pragma endregion
 
 #pragma region 描画初期化処理
-
 	// インデックスデータ
 	uint16_t indices[] =
 	{
@@ -210,10 +234,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	// 頂点データ
 	Vertex vertices[] = {
 		// x      y       z        u     v
-		{{-50.0f, -50.0f, 50.0f}, {0.0f, 1.0f}}, // 左下
-		{{-50.0f,  50.0f, 50.0f}, {0.0f, 0.0f}}, // 左上
-		{{ 50.0f, -50.0f, 50.0f}, {1.0f, 1.0f}}, // 右下
-		{{ 50.0f,  50.0f, 50.0f}, {1.0f, 0.0f}}, // 右上
+		{{-50.0f, -50.0f, 0.0f}, {0.0f, 1.0f}}, // 左下
+		{{-50.0f,  50.0f, 0.0f}, {0.0f, 0.0f}}, // 左上
+		{{ 50.0f, -50.0f, 0.0f}, {1.0f, 1.0f}}, // 右下
+		{{ 50.0f,  50.0f, 0.0f}, {1.0f, 0.0f}}, // 右上
 	};
 
 	// 頂点データ全体のサイズ = 頂点データ一つ分のサイズ * 頂点データの要素数
@@ -369,11 +393,20 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	(0.0f, 1280.0f, 720.0f, 0.0f, 0.0f, 1.0f);
 
 	//透視投影行列の計算
-	constMapTransform->mat = XMMatrixPerspectiveFovLH(
+	XMMATRIX matProjection = XMMatrixPerspectiveFovLH(
 		XMConvertToRadians(45.0f),
 		(float)window_widht / window_height,
 		0.1f, 1000.0f
 	);
+
+	//ビュー変換行列
+	XMMATRIX matView;
+	XMFLOAT3 eye(0, 0, -100); // 視点座標
+	XMFLOAT3 target(0, 0, 0); // 注視点座標
+	XMFLOAT3 up(0, 1, 0);     // 上方向ベクトル
+	matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
+
+	constMapTransform->mat = matView * matProjection;
 
 	assert(SUCCEEDED(result));
 
@@ -664,7 +697,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
-
 		}
 
 		//もうアプリケーションが終わるって時にmessageがWM_QUITになる
@@ -675,7 +707,14 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 #pragma endregion
 
-#pragma region 毎フレーム処理
+#pragma region  DirectX毎フレーム処理
+
+		// キーボード情報の取得開始
+		keyboard->Acquire();
+
+		// 全キーの入力状態を取得する
+		BYTE key[256] = {};
+		keyboard->GetDeviceState(sizeof(key), key);
 
 		//1バックバッファ番号を取得
 		UINT bbIndex = swapChain->GetCurrentBackBufferIndex();
@@ -694,6 +733,22 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		//3画面クリア
 		FLOAT clearColor[] = { 0.1f,0.25f,0.5f,0.0f };
 		cmmandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
+		float angle = 0.0f;
+
+		if (key[DIK_D] || key[DIK_A])
+		{
+			if (key[DIK_D]) { angle += XMConvertToRadians(1.0f); }
+			else if (key[DIK_A]) { angle -= XMConvertToRadians(1.0f); }
+
+			// angleラジアンだけY軸まわりに回転。半径は-100
+			eye.x = -100 * sinf(angle);
+			eye.y = -100 * cosf(angle);
+			matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
+		}
+
+		//定数バッファに転送
+		constMapTransform->mat = matView * matProjection;
 
 #pragma region グラフィックスコマンド
 
