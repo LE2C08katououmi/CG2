@@ -1,5 +1,8 @@
-#define DIRECTINPUT_VERSION  0x000
-#include<dinput.h>
+#define DIRECTINPUT_VERSION     0x0800   // DirectInputのバージョン指定
+#include <dinput.h>
+
+#pragma comment(lib, "dinput8.lib")
+#pragma comment(lib, "dxguid.lib")
 
 #include<Windows.h>
 #include<d3d12.h>
@@ -12,8 +15,6 @@
 #include<DirectXTex.h>
 
 #pragma comment(lib, "d3dcompiler.lib")
-#pragma comment(lib,"dinput8.lib")
-#pragma comment(lib,"dxguid.lib")
 #pragma comment(lib,"d3d12.lib")
 #pragma comment(lib,"dxgi.lib")
 
@@ -687,7 +688,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	assert(SUCCEEDED(result));
 
 
-	//DirectX初期化処理　ここまで
+#pragma endregion
 
 	while (true)
 	{
