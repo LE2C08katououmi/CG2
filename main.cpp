@@ -218,6 +218,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 	float angle = 0.0f;
 
+	// スケーリング倍率
+	XMFLOAT3 scale = { 1.0f,1.0f,1.0f };
+	// 回転角
+	XMFLOAT3 rotation = { 0.0f,0.0f,0.0f };
 	// 座標
 	XMFLOAT3 position = { 0.0f,0.0f,0.0f };
 
@@ -757,7 +761,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 			// angleラジアンだけY軸まわりに回転。半径は-100
 			eye.x = -100 * sinf(angle);
-			eye.y = -100 * cosf(angle);
+			eye.z = -100 * cosf(angle);
 			matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
 		}
 
@@ -774,23 +778,22 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 			else if (key[DIK_LEFT]) { position.x -= 1.0f; }
 		}
 
-		matWorld = XMMatrixIdentity();
-
 		XMMATRIX matScale; // スケーリング行列
-		matScale = XMMatrixScaling(1.0f, 0.5f, 1.0f);
-		matWorld *= matScale; // ワールド行列にスケーリングを反映
+		matScale = XMMatrixScaling(scale.x,scale.y,scale.z);
 
 		XMMATRIX matRot; // 回転行列
 		matRot = XMMatrixIdentity();
-		matRot *= XMMatrixRotationZ(XMConvertToRadians(0.0f)); // Z軸まわりに0度回転してから
-		matRot *= XMMatrixRotationX(XMConvertToRadians(15.0f));// X軸まわりに15度回転してから
-		matRot *= XMMatrixRotationY(XMConvertToRadians(30.0f));// Y軸まわりに30度回転してから
-		matWorld *= matRot; // ワールド行列に回転に反映
+		matRot *= XMMatrixRotationZ(rotation.z); // Z軸まわりに0度回転してから
+		matRot *= XMMatrixRotationX(rotation.x);// X軸まわりに15度回転してから
+		matRot *= XMMatrixRotationY(rotation.y);// Y軸まわりに30度回転してから
 
 		XMMATRIX matTrans; // 平行移動行列
 		matTrans = XMMatrixTranslation(position.x, position.y, position.z);
-		matWorld *= matTrans; // ワールド行列に平行移動を反映
 
+		matWorld = XMMatrixIdentity();
+		matWorld *= matScale; // ワールド行列にスケーリングを反映
+		matWorld *= matRot; // ワールド行列に回転に反映
+		matWorld *= matTrans; // ワールド行列に平行移動を反映
 		constMapTransform->mat = matWorld * matView * matProjection;
 
 #pragma region グラフィックスコマンド
