@@ -276,42 +276,43 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	// 頂点データ構造体
 	struct Vertex
 	{
-		XMFLOAT3 pos; // xyz座標
-		XMFLOAT2 uv;  // uv座標
+		XMFLOAT3 pos;    // xyz座標
+		XMFLOAT3 normal; // 法線ベクトル
+		XMFLOAT2 uv;     // uv座標
 	};
 	// 頂点データ
 	Vertex vertices[] = {
-		// x      y       z        u     v
+		// x      y       z       u     v
 		// 前
-		{{-5.0f, -5.0f, -5.0f}, {0.0f, 1.0f}}, // 左下
-		{{-5.0f,  5.0f, -5.0f}, {0.0f, 0.0f}}, // 左上
-		{{ 5.0f, -5.0f, -5.0f}, {1.0f, 1.0f}}, // 右下
-		{{ 5.0f,  5.0f, -5.0f}, {1.0f, 0.0f}}, // 右上
+		{{-5.0f, -5.0f, -5.0f},{},{0.0f, 1.0f}}, // 左下 0
+		{{-5.0f,  5.0f, -5.0f},{},{0.0f, 0.0f}}, // 左上 1
+		{{ 5.0f, -5.0f, -5.0f},{},{1.0f, 1.0f}}, // 右下 2
+		{{ 5.0f,  5.0f, -5.0f},{},{1.0f, 0.0f}}, // 右上 3
 		// 後
-		{{-5.0f, -5.0f,  5.0f}, {0.0f, 1.0f}}, // 左下
-		{{-5.0f,  5.0f,  5.0f}, {0.0f, 0.0f}}, // 左上
-		{{ 5.0f, -5.0f,  5.0f}, {1.0f, 1.0f}}, // 右下
-		{{ 5.0f,  5.0f,  5.0f}, {1.0f, 0.0f}}, // 右上
+		{{-5.0f, -5.0f,  5.0f},{},{0.0f, 1.0f}}, // 左下 4
+		{{-5.0f,  5.0f,  5.0f},{},{0.0f, 0.0f}}, // 左上 5
+		{{ 5.0f, -5.0f,  5.0f},{},{1.0f, 1.0f}}, // 右下 6
+		{{ 5.0f,  5.0f,  5.0f},{},{1.0f, 0.0f}}, // 右上 7
 		// 左
-		{{-5.0f, -5.0f, -5.0f}, {0.0f, 1.0f}}, // 左下
-		{{-5.0f, -5.0f,  5.0f}, {0.0f, 0.0f}}, // 左上
-		{{-5.0f,  5.0f, -5.0f}, {1.0f, 1.0f}}, // 右下
-		{{-5.0f,  5.0f,  5.0f}, {1.0f, 0.0f}}, // 右上
+		{{-5.0f, -5.0f, -5.0f},{},{0.0f, 1.0f}}, // 左下 8
+		{{-5.0f,  5.0f, -5.0f},{},{0.0f, 0.0f}}, // 左上 9
+		{{-5.0f, -5.0f,  5.0f},{},{1.0f, 1.0f}}, // 右下 10
+		{{-5.0f,  5.0f,  5.0f},{},{1.0f, 0.0f}}, // 右上 11
 		// 右
-		{{ 5.0f, -5.0f, -5.0f}, {0.0f, 1.0f}}, // 左下
-		{{ 5.0f, -5.0f,  5.0f}, {0.0f, 0.0f}}, // 左上
-		{{ 5.0f,  5.0f, -5.0f}, {1.0f, 1.0f}}, // 右下
-		{{ 5.0f,  5.0f,  5.0f}, {1.0f, 0.0f}}, // 右上
+		{{ 5.0f, -5.0f, -5.0f},{},{0.0f, 1.0f}}, // 左下 12
+		{{ 5.0f,  5.0f, -5.0f},{},{0.0f, 0.0f}}, // 左上 13
+		{{ 5.0f, -5.0f,  5.0f},{},{1.0f, 1.0f}}, // 右下 14
+		{{ 5.0f,  5.0f,  5.0f},{},{1.0f, 0.0f}}, // 右上 15
 		// 下
-		{{-5.0f, -5.0f, -5.0f}, {0.0f, 1.0f}}, // 左下
-		{{-5.0f, -5.0f,  5.0f}, {0.0f, 0.0f}}, // 左上
-		{{ 5.0f, -5.0f, -5.0f}, {1.0f, 1.0f}}, // 右下
-		{{ 5.0f, -5.0f,  5.0f}, {1.0f, 0.0f}}, // 右上
+		{{-5.0f, -5.0f, -5.0f},{},{0.0f, 1.0f}}, // 左下 16
+		{{-5.0f, -5.0f,  5.0f},{},{0.0f, 0.0f}}, // 左上 17
+		{{ 5.0f, -5.0f, -5.0f},{},{1.0f, 1.0f}}, // 右下 18
+		{{ 5.0f, -5.0f,  5.0f},{},{1.0f, 0.0f}}, // 右上 19
 		// 上
-		{{-5.0f,  5.0f, -5.0f}, {0.0f, 1.0f}}, // 左下
-		{{-5.0f,  5.0f,  5.0f}, {0.0f, 0.0f}}, // 左上
-		{{ 5.0f,  5.0f, -5.0f}, {1.0f, 1.0f}}, // 右下
-		{{ 5.0f,  5.0f,  5.0f}, {1.0f, 0.0f}}, // 右上
+		{{-5.0f,  5.0f, -5.0f},{},{0.0f, 1.0f}}, // 左下 20
+		{{-5.0f,  5.0f,  5.0f},{},{0.0f, 0.0f}}, // 左上 21
+		{{ 5.0f,  5.0f, -5.0f},{},{1.0f, 1.0f}}, // 右下 22
+		{{ 5.0f,  5.0f,  5.0f},{},{1.0f, 0.0f}}, // 右上 23
 	};
 
 	// インデックスデータ
@@ -319,22 +320,22 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	{
 		// 前
 		0,1,2, // 三角形1つ目
-		1,2,3, // 三角形2つ目
+		2,1,3, // 三角形2つ目
 		// 後
-		4,5,6, // 三角形3つ目
+		5,4,6, // 三角形3つ目
 		5,6,7, // 三角形4つ目
 		// 左
-		8,9,10, // 三角形5つ目
+		9,8,10, // 三角形5つ目
 		9,10,11, // 三角形6つ目
 		// 右
 		12,13,14, // 三角形7つ目
-		13,14,15, // 三角形8つ目
+		14,13,15, // 三角形8つ目
 		// 下
 		16,17,18, // 三角形9つ目
-		17,18,19, // 三角形10つ目
+		18,17,19, // 三角形10つ目
 		// 上
 		20,21,22, // 三角形11つ目
-		21,22,23, // 三角形12つ目
+		22,21,23, // 三角形12つ目
 	};
 
 	// 頂点データ全体のサイズ = 頂点データ一つ分のサイズ * 頂点データの要素数
@@ -689,6 +690,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 			D3D12_APPEND_ALIGNED_ELEMENT,
 			D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
 		},
+		{ // 法線ベクトル(1行で書いたほうが見やすい)
+			"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,
+			D3D12_APPEND_ALIGNED_ELEMENT,
+			D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+		},
 		{ // uv座標(1行で書いたほうが見やすい)
 			"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0,
 			D3D12_APPEND_ALIGNED_ELEMENT,
@@ -709,7 +715,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	pipelineDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK; // 標準設定
 
 	// ラスタライザの設定
-	pipelineDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE; // カリングしない
+	pipelineDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK; // 背面をカリング
 	pipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID; // ポリゴン内塗りつぶし
 	pipelineDesc.RasterizerState.DepthClipEnable = true; // 深度クリッピングを有効に
 
@@ -874,7 +880,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		}
 
 		XMMATRIX matScale; // スケーリング行列
-		matScale = XMMatrixScaling(scale.x,scale.y,scale.z);
+		matScale = XMMatrixScaling(scale.x, scale.y, scale.z);
 
 		XMMATRIX matRot; // 回転行列
 		matRot = XMMatrixIdentity();
