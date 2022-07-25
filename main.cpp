@@ -248,14 +248,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma endregion
 
 #pragma region 描画初期処理
-	//頂点データ
-	XMFLOAT3 vertices[] = {
-		{ -0.5f, -0.5f, 0.0f }, // 左下
-		{ -0.5f, +0.5f, 0.0f }, // 左上
-		{ +0.5f, -0.5f, 0.0f }, // 右下
-	};
+	float leftDownX = -0.5f;
+	float leftUpX = -0.5f;
+	float rightDownX = 0.5f;
+
+	float leftDownY = -0.5f;
+	float leftUpY = 0.5f;
+	float rightDownY = -0.5f;
+
 	// 頂点データ全体のサイズ = 頂点データ一つ分のサイズ * 頂点データの要素数
-	UINT sizeVB = static_cast<UINT>(sizeof(XMFLOAT3) * _countof(vertices));
+	UINT sizeVB = static_cast<UINT>(sizeof(XMFLOAT3) * 3);
 
 	// 頂点バッファの設定
 	D3D12_HEAP_PROPERTIES heapProp{};   // ヒープ設定
@@ -280,17 +282,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		nullptr,
 		IID_PPV_ARGS(&vertBuff));
 	assert(SUCCEEDED(result));
-
-	// GPU上のバッファに対応した仮想メモリ(メインメモリ上)を取得
-	XMFLOAT3* vertMap = nullptr;
-	result = vertBuff->Map(0, nullptr, (void**)&vertMap);
-	assert(SUCCEEDED(result));
-	// 全頂点に対して
-	for (int i = 0; i < _countof(vertices); i++) {
-		vertMap[i] = vertices[i];   // 座標をコピー
-	}
-	// 繋がりを解除
-	vertBuff->Unmap(0, nullptr);
 
 	// 頂点バッファビューの作成
 	D3D12_VERTEX_BUFFER_VIEW vbView{};
@@ -569,6 +560,55 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		// 値を書き込むと自動的に転送される
 		constMapMaterial->color = XMFLOAT4(R, G, B, A);
+
+		// 三角形を移動させる
+		float speed = 0.01f;
+
+		if (key[DIK_A])
+		{
+			leftDownX -= speed;
+			leftUpX -= speed;
+			rightDownX -= speed;
+		}
+
+		if (key[DIK_D])
+		{
+			leftDownX += speed;
+			leftUpX += speed;
+			rightDownX += speed;
+		}
+
+		if (key[DIK_W])
+		{
+			leftDownY += speed;
+			leftUpY += speed;
+			rightDownY += speed;
+		}
+
+		if (key[DIK_S])
+		{
+			leftDownY -= speed;
+			leftUpY -= speed;
+			rightDownY -= speed;
+		}
+
+		//頂点データ
+		XMFLOAT3 vertices[] = {
+			{ leftDownX, leftDownY, 0.0f }, // 左下
+			{ leftUpX, leftUpY, 0.0f }, // 左上
+			{ rightDownX, rightDownY, 0.0f }, // 右下
+		};
+
+		// GPU上のバッファに対応した仮想メモリ(メインメモリ上)を取得
+		XMFLOAT3* vertMap = nullptr;
+		result = vertBuff->Map(0, nullptr, (void**)&vertMap);
+		assert(SUCCEEDED(result));
+		// 全頂点に対して
+		for (int i = 0; i < _countof(vertices); i++) {
+			vertMap[i] = vertices[i];   // 座標をコピー
+		}
+		// 繋がりを解除
+		vertBuff->Unmap(0, nullptr);
 
 		// 4.描画コマンドここから
 		// ビューポート設定コマンド
