@@ -282,7 +282,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	};
 	// 頂点データ
 	Vertex vertices[] = {
-		// x      y       z       u     v
+		// x      y      z         u     v
 		// 前
 		{{-5.0f, -5.0f, -5.0f},{},{0.0f, 1.0f}}, // 左下 0
 		{{-5.0f,  5.0f, -5.0f},{},{0.0f, 0.0f}}, // 左上 1
@@ -331,12 +331,40 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		12,13,14, // 三角形7つ目
 		14,13,15, // 三角形8つ目
 		// 下
-		16,17,18, // 三角形9つ目
-		18,17,19, // 三角形10つ目
+		17,16,18, // 三角形9つ目
+		17,18,19, // 三角形10つ目
 		// 上
 		20,21,22, // 三角形11つ目
 		22,21,23, // 三角形12つ目
 	};
+
+	for (int i = 0; i < _countof(indices) / 3; i++)
+	{// 三角形１つごとに計算していく
+		// 三角形のインデックスを取り出して、一時的な変数に入れる
+		unsigned short index0 = indices[i * 3 + 0];
+		unsigned short index1 = indices[i * 3 + 1];
+		unsigned short index2 = indices[i * 3 + 2];
+
+		// 三角形を構成する頂点座標をベクトルに代入
+		XMVECTOR p0 = XMLoadFloat3(&vertices[index0].pos);
+		XMVECTOR p1 = XMLoadFloat3(&vertices[index1].pos);
+		XMVECTOR p2 = XMLoadFloat3(&vertices[index2].pos);
+
+		// p0→p1ベクトル、p0→p2ベクトルを計算(ベクトルの減算)
+		XMVECTOR v1 = XMVectorSubtract(p1, p0);
+		XMVECTOR v2 = XMVectorSubtract(p2, p0);
+
+		// 外積は両方から垂直なベクトル
+		XMVECTOR normal = XMVector3Cross(v1, v2);
+
+		// 正規化(長さを1にする)
+		normal = XMVector3Normalize(normal);
+
+		// 求めた法線頂点データに代入
+		XMStoreFloat3(&vertices[index0].normal, normal);
+		XMStoreFloat3(&vertices[index1].normal, normal);
+		XMStoreFloat3(&vertices[index2].normal, normal);
+	}
 
 	// 頂点データ全体のサイズ = 頂点データ一つ分のサイズ * 頂点データの要素数
 	UINT sizeVB = static_cast<UINT>(sizeof(vertices[0]) * _countof(vertices));
@@ -499,7 +527,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 	//ビュー変換行列
 	XMMATRIX matView;
-	XMFLOAT3 eye(0, 20, -100); // 視点座標
+	XMFLOAT3 eye(0, 40, -100); // 視点座標
 	XMFLOAT3 target(0, 0, 0); // 注視点座標
 	XMFLOAT3 up(0, 1, 0);     // 上方向ベクトル
 
@@ -804,7 +832,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	ID3D12PipelineState* pipelineState = nullptr;
 	result = device->CreateGraphicsPipelineState(&pipelineDesc, IID_PPV_ARGS(&pipelineState));
 	assert(SUCCEEDED(result));
-
 
 #pragma endregion
 
